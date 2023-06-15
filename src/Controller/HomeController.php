@@ -15,10 +15,9 @@ class HomeController extends AbstractController
      */
     public function index(EntityManagerInterface $manager): Response
     {
-        $books = $manager->getRepository(Book::class)->findAll();   
-        // SELECT * FROM Book
-        // findAll() permet de récupérer toute la table 
-        //dd($books);
+        $books = $manager->getRepository(Book::class)->findAll();
+        // SELECT * FROM book
+        // findAll() permet de recuperer toutes la table 
         return $this->render('home/index.html.twig', [
             'books' => $books,
         ]);

@@ -4,46 +4,73 @@ namespace App\Controller;
 
 use App\Entity\Book;
 use App\Form\BookType;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\FileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class AddBookController extends AbstractController
 {
     /**
-     * @Route("/addbook", name="app_add_book")
+     * @Route("/addbook", name="app_addbook")
      */
-    //Request $request( v dire délégué ses pouvoir à $request)
-    public function index(Request $request,EntityManagerInterface $manager): Response
+    public function index(Request $request, SluggerInterface $slugger): Response
     {
-        // Entity Manager permet de gérer les données de la bdd
-        // On a importer la class Book
         $book = new Book();
-
-        // On crée un formulaire à partir de la class BookType
-        $form = $this->createForm(BookType::class, $book); 
-        // On récupère les données du formulaire
+        $form = $this->createForm(BookType::class, $book);
         $form->handleRequest($request);
 
-        // On vérifie si le formulaire a été soumis
-        if($form->isSubmitted()){
-            // Je veux récuperer automatiquement la date courante
-            $book->setCreatedAt(new \Datetime('Europe/Paris'));
-            // persist permet de préparer les données à être inserér dans la bdd
-            $manager->persist($book);
-            // On flushe permet d'envoyer les données dans la bdd 
-            $manager->flush();
-            $this->addFlash('success', 'le livre a bien été ajouté');
+        if ($form->isSubmitted() && $form->isValid()) {
+            $brochureFile = $form->get('picture')->getData();
 
-            $form = $this->createForm(BookType::class, new Book());
+            if ($brochureFile) {
+                $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $brochureFile->guessExtension();
+
+                try {
+                    $brochureFile->move(
+                        $this->getParameter('brochures_directory'),
+                        $newFilename
+                    );
+                } catch (FileException $e) {
+                    // Gérer l'exception si quelque chose se passe pendant le téléchargement du fichier
+                    throw new \Exception('Une erreur s\'est produite lors du téléchargement du fichier.');
+                }
+
+                $book->setBrochureFilename($newFilename);
+            }
+
+            return $this->redirectToRoute('app_addbook');
         }
 
-
-        return $this->render('add_book/index.html.twig', [
+        return $this->render('addbook/index.html.twig', [
             'form' => $form->createView(),
-
         ]);
     }
+
+    public function new(Request $request, FileUploader $fileUploader)
+{
+    // ...
+    $book= new Book;
+    $form = $this->createForm(BookType::class);
+    $form->handleRequest($request);
+    if ($form->isSubmitted() && $form->isValid()) {
+
+        /** @var UploadedFile $brochureFile */
+        $brochureFile = $form->get('brochure')->getData();
+        if ($form->get('brochure')->getData()) {
+            $brochureFileName = $fileUploader->upload($form->get('brochure')->getData());
+            $book->setBrochureFilename($brochureFileName);
+        }
+
+        // ...
+    }
+
+    // ...
+}
+    
 }

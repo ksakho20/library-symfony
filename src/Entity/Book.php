@@ -10,6 +10,23 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Book
 {
+    // ...
+
+    //#[ORM\Column(type: 'string')]
+    private $brochureFilename;
+
+    public function getBrochureFilename(): string
+    {
+        return $this->brochureFilename;
+    }
+
+    public function setBrochureFilename(string $brochureFilename): self
+    {
+        $this->brochureFilename = $brochureFilename;
+
+        return $this;
+    }
+
     /**
      * @ORM\Id
      * @ORM\GeneratedValue

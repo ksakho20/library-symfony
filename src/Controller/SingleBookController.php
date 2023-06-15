@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Book;
+use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,13 +16,16 @@ class SingleBookController extends AbstractController
      */
     public function index($id, EntityManagerInterface $manager): Response
     {
-        // Récupérer le livre correspondant à son ID
         $book = $manager->getRepository(Book::class)->find($id);
+        // find($id) permet de recuperer une ligne de la table (ex: id = 16)
+        // il recuperer le livre par son id qui est dans l'url
 
+        // SELECT * FROM book WHERE id = idUrl
         return $this->render('single_book/index.html.twig', [
             'book' => $book,
         ]);
     }
+
 
 
     /**
@@ -29,18 +33,13 @@ class SingleBookController extends AbstractController
      */
     public function remove($id, EntityManagerInterface $manager)
     {
-        // 1- Récupérer le livre à supprimer
+        //  0- recuperer l'article en question
         $book = $manager->getRepository(Book::class)->find($id);
-
-        // if (!$book) {
-        //     throw $this->createNotFoundException('Le livre avec l\'ID ' . $id . ' n\'existe pas.');
-        // }
-
-        // 2- Supprimer le livre
+        //  1- supprimer l'article en question 
         $manager->remove($book);
-        $manager->flush();
-
-        // 3- Redirection sur la page d'accueil
+        $manager->flush();  
+        //  2- redirection sur la page d'accueil
         return $this->redirectToRoute('app_home');
+
     }
 }

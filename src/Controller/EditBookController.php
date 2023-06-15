@@ -10,25 +10,26 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class EditBookController extends AbstractController
+class EditbookController extends AbstractController
 {
     /**
-     * @Route("/edit/book", name="app_edit_book")
+     * @Route("/editbook/{id}", name="app_editbook")
      */
-    public function index($id,Request $request, EntityManagerInterface $manager): Response
-    {      
+    public function index($id,EntityManagerInterface $manager,Request $request): Response
+    {
 
         $book = $manager->getRepository(Book::class)->find($id);
-        $form = $this->createForm(BookType::class);
+        $form = $this->createForm(BookType::class,$book);
         $form->handleRequest($request);
         if($form->isSubmitted()){
-            $book ->setCreatedAt(new \DateTime());
+            $book->setCreatedAt(new \DateTime());
             $manager->persist($book);
-            $manager->flush();
-            return $this->redirectToRoute('app_home');
+            $manager->flush();     
+            return $this->redirectToRoute('app_single_book',['id' => $book->getId()]);
         }
 
-        return $this->render('edit_book/index.html.twig', [
+
+        return $this->render('editbook/index.html.twig', [
             'form' => $form->createView(),
         ]);
     }
